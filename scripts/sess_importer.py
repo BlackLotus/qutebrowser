@@ -8,7 +8,7 @@ import json
 import yaml
 
 # todo: nearly everything... especially pinned/active tabs
-
+# todo: nested sessionrestore in nested yaml files?
 browser_default_input_format = {
     'firefox': 'mozilla',
 }
@@ -17,18 +17,22 @@ browser_default_input_format = {
 def parse_firefox_windows(windows):
     # handle the windows-array (for sessionrestore)
     qute = {"windows": [] }
-    print("Converting %i open windows" % (len(fsession["windows"])))
+    print("Converting %i open windows" % (len(windows)))
     count = 0
 #    for window in fsession["windows"]:
     for window in windows:
         qutewindow = {"active": True, "tabs": []}
         for tab in window["tabs"]:
             count+=1
-            print(count)
+#            print(count)
             history = [] # history of the tab
             for entry in tab["entries"]:
-                print(entry["url"])
-                history.append({"url":entry["url"],
+#                print(entry["url"])
+                if entry["url"] == "about:sessionrestore":
+                    qute["windows"] += \
+                    parse_firefox_windows(tab["formdata"]["id"]["sessionData"]["windows"])["windows"]
+                else:
+                    history.append({"url":entry["url"],
                                         "title":entry["title"],
                                         "pinned":False})
             qutewindow["tabs"].append(history)
