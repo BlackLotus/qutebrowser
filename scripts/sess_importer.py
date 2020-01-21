@@ -16,12 +16,14 @@ browser_default_input_format = {
 
 def parse_firefox_windows(windows):
     # handle the windows-array (for sessionrestore)
-    qute = {"windows": [] }
-    print("Converting %i open windows" % (len(windows)))
+    qute = {"windows": []}
+#    print("Converting %i open windows" % (len(windows)))
     count = 0
 #    for window in fsession["windows"]:
     for window in windows:
-        qutewindow = {"active": True, "tabs": []}
+        qutewindow = {"active": True, "tabs": [], "geometry":"FOOBAR"}
+        # I sed replace FOOBAR later with a valid geometry, but for not this
+        # has to do
         for tab in window["tabs"]:
             count+=1
 #            print(count)
@@ -29,13 +31,29 @@ def parse_firefox_windows(windows):
             for entry in tab["entries"]:
 #                print(entry["url"])
                 if entry["url"] == "about:sessionrestore":
-                    qute["windows"] += \
-                    parse_firefox_windows(tab["formdata"]["id"]["sessionData"]["windows"])["windows"]
+                    pass
+#                    qute["windows"] += \
+#                    parse_firefox_windows(tab["formdata"]["id"]["sessionData"]["windows"])["windows"]
                 else:
-                    history.append({"url":entry["url"],
-                                        "title":entry["title"],
-                                        "pinned":False})
-            qutewindow["tabs"].append(history)
+                    if ("url" in entry) and ("title" in entry):
+                        history.append({"url":entry["url"],
+                                            "title":entry["title"],
+                                            "pinned":False})
+                    elif not("url" in entry) and "title" in entry:
+                        history.append({"url": "urlcouldnotbeloaded",
+                                            "title":entry["title"],
+                                            "pinned":False})
+                    elif not("title" in entry) and "url" in entry:
+                        history.append({"url":entry["url"],
+                                            "title":"Title could not be loaded",
+                                            "pinned":False})
+                    else:
+                        history.append({"url":"urlcouldnotbeloaded",
+                                            "title":"Title could not be loaded",
+                                            "pinned":False})
+            if len(history)>0:
+                history[-1]["active"]=1
+                qutewindow["tabs"].append({"history":history, "url":history[-1]["url"], "title":history[-1]["title"]})
         qute["windows"].append(qutewindow)
     return qute
 
@@ -59,3 +77,4 @@ def open_firefox_session():
     print(yaml.dump(qute, default_flow_style=False))
 
 open_firefox_session()
+
